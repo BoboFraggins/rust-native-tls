@@ -33,6 +33,7 @@ fn supported_protocols(
             Protocol::Tlsv10 => SslVersion::TLS1,
             Protocol::Tlsv11 => SslVersion::TLS1_1,
             Protocol::Tlsv12 => SslVersion::TLS1_2,
+            Protocol::Tlsv13 => SslVersion::TLS1_3,
             Protocol::__NonExhaustive => unreachable!(),
         }
     }
@@ -55,7 +56,8 @@ fn supported_protocols(
         | SslOptions::NO_SSLV3
         | SslOptions::NO_TLSV1
         | SslOptions::NO_TLSV1_1
-        | SslOptions::NO_TLSV1_2;
+        | SslOptions::NO_TLSV1_2
+        | SslOptions::NO_TLSV1_3;
 
     ctx.clear_options(no_ssl_mask);
     let mut options = SslOptions::empty();
@@ -72,14 +74,25 @@ fn supported_protocols(
                 | SslOptions::NO_TLSV1
                 | SslOptions::NO_TLSV1_1
         }
+        Some(Protocol::Tlsv13) => {
+            SslOptions::NO_SSLV2
+                | SslOptions::NO_SSLV3
+                | SslOptions::NO_TLSV1
+                | SslOptions::NO_TLSV1_1
+                | SslOptions::NO_TLSV1_2
+        }
         Some(Protocol::__NonExhaustive) => unreachable!(),
     };
     options |= match max {
-        None | Some(Protocol::Tlsv12) => SslOptions::empty(),
-        Some(Protocol::Tlsv11) => SslOptions::NO_TLSV1_2,
-        Some(Protocol::Tlsv10) => SslOptions::NO_TLSV1_1 | SslOptions::NO_TLSV1_2,
+        None | Some(Protocol::Tlsv13) => SslOptions::empty(),
+        Some(Protocol::Tlsv12) => SslOptions::NO_TLSV1_3,
+        Some(Protocol::Tlsv11) => SslOptions::NO_TLSV1_2 | SslOptions::NO_TLSV1_3,
+        Some(Protocol::Tlsv10) => {
+            SslOptions::NO_TLSV1_1 | SslOptions::NO_TLSV1_2 | SslOptions::NO_TLSV1_3
+        }
         Some(Protocol::Sslv3) => {
-            SslOptions::NO_TLSV1 | SslOptions::NO_TLSV1_1 | SslOptions::NO_TLSV1_2
+            SslOptions::NO_TLSV1 | SslOptions::NO_TLSV1_1 | SslOptions::NO_TLSV1_2 |
+            SslOptions::NO_TLSV1_3
         }
         Some(Protocol::__NonExhaustive) => unreachable!(),
     };
